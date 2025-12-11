@@ -45,12 +45,126 @@ public class CircuitBoard {
 	public CircuitBoard(String filename) throws FileNotFoundException {
 		Scanner fileScan = new Scanner(new File(filename));
 		
-		//TODO: parse the given file to populate the char[][]
-		// throw FileNotFoundException if Scanner cannot read the file
-		// throw InvalidFileFormatException if any issues are encountered while parsing the file
+		if (!fileScan.hasNextLine()) {
+			fileScan.close();
+			throw new InvalidFileFormatException("File is empty");
+		}
+
+		String firstLine = fileScan.nextLine().trim();
+		Scanner lineScan = new Scanner(firstLine);
+
+		int rows, cols;
+		try {
+			if (!lineScan.hasNextInt()) {
+				lineScan.close();
+				fileScan.close();
+				throw new InvalidFileFormatException("First line must contain an integer for rows");
+			}
+			rows = lineScan.nextInt();
+
+			if (!lineScan.hasNextInt()) {
+				lineScan.close();
+				fileScan.close();
+				throw new InvalidFileFormatException("First line must contain an integer for columns");
+			}
+			cols = lineScan.nextInt();
 		
-		ROWS = 0; //replace with initialization statements using values from file
-		COLS = 0;
+
+		//Check for extra values on first line 
+		if (lineScan.hasNext()) {
+			lineScan.close();
+			fileScan.close();
+			throw new InvalidFileFormatException("First line must only contain two integers for rows and columns");
+		}
+	}	 catch (Exception e) {
+			lineScan.close();
+			fileScan.close();
+			if (e instanceof InvalidFileFormatException) {
+				throw e;
+			}
+			throw new InvalidFileFormatException("First line must contain two integers for rows and columns");
+		}
+		lineScan.close();
+		
+		ROWS = rows; 
+		COLS = cols;
+		board = new char[ROWS][COLS];
+
+		//parse board contents
+		int startCount = 0, endCount = 0;
+
+		for (int row = 0; row < ROWS; row++) {
+			if (!fileScan.hasNextLine()) {
+				fileScan.close();
+				throw new InvalidFileFormatException("missing values in a row");
+			}
+			
+			String line = fileScan.nextLine().trim();
+			Scanner rowScan = new Scanner(line);
+			
+			for (int col = 0; col < COLS; col++) {
+				if (!rowScan.hasNext()) {
+					rowScan.close();
+					fileScan.close();
+					throw new InvalidFileFormatException("missing values in a row");
+				}
+				
+				String token = rowScan.next();
+				if (token.length() != 1) {
+					rowScan.close();
+					fileScan.close();
+					throw new InvalidFileFormatException("invalid character '" + token + "'");
+				}
+				
+				char c = token.charAt(0);
+
+				//validate character
+				if (ALLOWED_CHARS.indexOf(c) == -1) {
+					rowScan.close();
+					fileScan.close();
+					throw new InvalidFileFormatException("invalid character '" + c + "'");
+				}
+				
+				board[row][col] = c;
+
+				//track starting and ending points
+				if (c == START) {
+					startCount++;
+					startingPoint = new Point(row,col);
+				} else if (c == END) {
+					endCount++;
+					endingPoint = new Point(row,col);
+				}
+			}
+
+			//check for extra values on this row
+			if (rowScan.hasNext()) {
+				rowScan.close();
+				fileScan.close();
+				throw new InvalidFileFormatException("extra values in row " + (row + 1));
+			}
+			rowScan.close();
+		}
+
+		//check for extra rows
+		if (fileScan.hasNextLine()) {
+			fileScan.close();
+			throw new InvalidFileFormatException("extra rows in file");
+		}
+
+		//validate starting and ending points
+		if (startCount > 1) {
+			fileScan.close();
+			throw new InvalidFileFormatException("more than one starting point");
+		}
+		if (endCount > 1) {
+			fileScan.close();
+			throw new InvalidFileFormatException("more than one ending point");
+		}
+		if (startCount == 0 || endCount == 0) {
+			fileScan.close();
+			throw new InvalidFileFormatException("no starting point");
+		}
 		
 		fileScan.close();
 	}
