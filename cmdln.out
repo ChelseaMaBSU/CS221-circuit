@@ -1,0 +1,4 @@
+Usage: java CircuitTracer storageChoice displayChoice inputFile 
+	where storageChoice is either -s for a stack or -q for a queue,
+	displayChoice is either -c for console-only output or -g for GUI output,
+	and inputFile is the name of a file containing a layout to complete.
