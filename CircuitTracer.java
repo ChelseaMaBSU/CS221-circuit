@@ -58,11 +58,11 @@ public class CircuitTracer {
         }
 
         //parse and validate display choice
-        boolean consoleMode = false;
+        boolean consoleMode;
         if (args[1].equals("-c")) {
             consoleMode = true;
         } else if (args[1].equals("-g")) {
-            System.out.println("GUI output not yet implemented.");
+            consoleMode = false;
         } else {
             printUsage();
             return;
