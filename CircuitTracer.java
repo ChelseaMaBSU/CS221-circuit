@@ -143,6 +143,9 @@ public class CircuitTracer {
                     System.out.println();
                 }
             }
+        } else {
+            //GUI mode
+            new CircuitTracerGUI(board, bestPaths);
         }
     }
 } // class CircuitTracer
