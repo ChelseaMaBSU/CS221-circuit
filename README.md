@@ -7,23 +7,18 @@
 
 OVERVIEW:
 
- Concisely explain what the program does. If this exceeds a couple
- of sentences, you're going too far. The details go in other
- sections.
+ CircuitTracer is a path-finding application that searches for the shortest routes connecting two components on a circuit board. The program will read board layouts form input files, use either stack-based or queue-based search algorithms to find all optimal paths, and display the results in either the console or through a graphical user interface.
 
 
 INCLUDED FILES:
-
- List the files required for the project with a brief
- explanation of why each is included.
-
- e.g.
- * CircuitBoard.java
- * CircuitTracer.java
- * Storage.java
- * TraceState.java
- * InvalidFileFormatException.java
- * OccupiedPositionException.java
+ 
+ * CircuitBoard.java - Represents a 2D circuit board layout read from an input file and will validate the board format and track component positions.
+ * CircuitTracer.java - The main driver class that parses command-line arguments, run the algorithms, and outputs the results.
+ * CircuitTracerGUI.java - Graphical user interface that displays circuit boards and solution paths with highlight interactions
+ * Storage.java - Wrapper class providing unified interface for stack and queue data structures.
+ * TraceState.java - Represents search state containing the current path configuration during the search process
+ * InvalidFileFormatException.java - Custom exception for file parsing errors.
+ * OccupiedPositionException.java - Custom exception for invalid trace placement attempts.
  * README - this file
 
 ANALYSIS:
@@ -55,77 +50,56 @@ ANALYSIS:
 
 COMPILING AND RUNNING:
 
- Give the command for compiling the program, the command
- for running the program, and any usage instructions the
- user needs.
- 
- These are command-line instructions for a system like onyx.
- They have nothing to do with Eclipse or any other IDE. They
- must be specific - assume the user has Java installed, but
- has no idea how to compile or run a Java program from the
- command-line.
- 
- e.g.
- From the directory containing all source files, compile the
- driver class (and all dependencies) with the command:
- $ javac Class1.java
+ From the directory that contains all the source files, compile the driver class and all dependencies with the command:
+ $ javac CircuitTracer.java
 
- Run the compiled class file with the command:
- $ java Class1
+ Run the compiled class with the command:
+ $ java CircuitTracer [storage] [display] [filename]
 
- Console output will give the results after the program finishes.
+ [storage] will be the algorithms used, either -s for storage or -q for queue.
+ [display] will be either -c for console or -g for the GUI.
+ [filename] will be the input file that contains a circuit board.
+
+ The console output will display all the shortest path solutions. The GUI will open an interactive window where the user can select different solutions that will be highlighted on the board.
 
 
 PROGRAM DESIGN AND IMPORTANT CONCEPTS:
 
- This is the sort of information someone who really wants to
- understand your program - possibly to make future enhancements -
- would want to know.
+ CircuitBoard parses the input files and validates board formats. It stores the 2D character array that represents the board. The starting and ending positions, represented as '1' and '2', are tracked, then it provides methods to check if the positions are open. The paths will be marked and traced. This code will also validate that there is exactly one start and one ending position exist in the board.
 
- Explain the main concepts and organization of your program so that
- the reader can understand how your program works. This is not a repeat
- of javadoc comments or an exhaustive listing of all methods, but an
- explanation of the critical algorithms and object interactions that make
- up the program.
+ CircuitTracer validates command-line arguments. It will instantiate appropriate storage structure, either stack or queue. This file implements the main search algorithm, in which it will initialize storage with states adjacent to the starting component '1', repeatedly retrieve states and generate valid neighbors, track all the shortest path solutions found, and finally output the results in the console or GUI. It will handle FileNotFoundExceptions and InvalidFileFormatExceptions.
 
- Explain the main responsibilities of the classes and interfaces that make
- up the program. Explain how the classes work together to achieve the program
- goals. If there are critical algorithms that a user should understand, 
- explain them as well.
- 
- If you were responsible for designing the program's classes and choosing
- how they work together, why did you design the program this way? What, if 
- anything, could be improved? 
+ In TraceState, it represents a single search state: a board with a partial path traced. Path history is maintained as a list of points and it generates new states by extending the path to valid neighboring positions. Provided are methods to check if the current state is a solution, and uses copy-on-write pattern to avoid modifying the board.
+
+ Storage allows the algorithms stack and queue to work identically regardless of underlying structure. It abstracts stack and queue implementation behind a common interface, and provides store(), retrieve(), isEmpty(), and size() methods. Storage also utilizes Java's stack and LinkedList implementations for queue.
+
+ The GUI creates an interface with a menu bar and grid that displays the [filename] circuit board. It will list all solution paths in selectable JList and highlights the selected paths with a red 'T' character. The GUI also provides a File>Quit and Help>About options that can quit the program and display a pop-up that states the author of the GUI.
+
+ The search algorithm explores all possible paths from start '1' to goal '2', in which it will begin with positions adjacent ot the start component. While the storage is not empty, it will retrieve the next state and continue to generate new states for every valid neighboring positions that aren't blocked or already in the path. If the path ends adjacent to the goal component or it's found the goal, it will be added to solutions and return all solutions with the shortest path length. The storage abstraction will allow clean separation between the search algorithms and data structure choices. This will make the code more maintainable, and the same algorithm will work for both stack and queue. TraceState prevents bugs from accidental state corruption, but will increase memory usage.
+ An improvement can be adding a way to stop exploring longer paths than the ones that are currently the best to shorten exploration time.
+
 
 TESTING:
 
- How did you test your program to be sure it works and meets all of the
- requirements? What was the testing strategy? What kinds of tests were run?
- Can your program handle bad input? Is your program  idiot-proof? How do you 
- know? What are the known issues / bugs remaining in your program?
+ Testing included three different states: unit testing of CircuitBoard and CircuitTracer, integrating testing of the search algorithm, and system testing. 
+
+ This project was provided with multiple valid and invalid circuit boards that were used to see if the printed output would be correct. During testing of CircuitBoard, using the given input files helped check if the board dimensions and character parsing was correct. It would confirm if the starting and ending points were identified correctly, and tested edge cases. The invalid input testing was a way to check if the approprate exceptions would be thrown if there were multiple starting or ending points, misssing starting or ending points, mismatched rows and columns, extra values, decimal values, and non-existent files.
+
+ Each command-line testing involved multiple valid combinations, -s -c, -s -g, -q -c, -q -g, to print the solutions of the input files. Invalid storage and display options were tested to confirm that it displayed the correct message. GUI testing was done by the -g flag. Once the GUI opened, the solution selection and highlighting was tested to see if a valid solution was highlighted for the specific storage and input file. The tabs File>Quit exited out of the JPanel cleanly and Help>About displayed the correct information. 
 
 
 DISCUSSION:
  
- Discuss the issues you encountered during programming (development)
- and testing. What problems did you have? What did you have to research
- and learn on your own? What kinds of errors did you get? How did you 
- fix them?
+ I feel the most challenging part of this project would be the file validation in the CircuitBoard constructor. There were many edge cases that required specific exception handling, and I had to review the Scanner's hasNextInt() and hasNext() methods. The analysis questions that were required to be answered before coding helped me understand the key differences between stack and queue search. Knowing the differences explained why one would use more memory than the other, but it will find the shortest path first. 
  
- What parts of the project did you find challenging? Is there anything
- that finally "clicked" for you in the process of working on this project?
+ I think I still struggle a lot with visualizing the code and boards, and knowing what to do next for each method and search behavior. Data structures in this project demonstrated how stack and queue can affect algorithm behavior. To be honest, I think I'm still extremely rusty with data structures. It's a concept that's hard for me to grasp, but writing and drawing the boards helped me visualize how and where paths need to go.
+
+ A real challenge would be the GUI implementation. Truthfully, I haven't done any GUI implementations in months, so I had to review past CS121 notes and projects to be reminded of how it's supposed to be coded. Figuring out the board layout, selection listeners for interactive highlighting, and JOptionPanes prove to be quite a challenge, especially when I wanted to match it as close to the provided example screenshots of what it's supposed to look like and do. 
+
+ The most trickiest part of the GUI was managing the highlighting state and ensuring that the board resets to the original state before showing a new solution. I had to store the original characters and reset from that baseline rather than attempting to go back on the highlighting for the next solution.
  
  
 EXTRA CREDIT:
 
- If the project had opportunities for extra credit that you attempted,
- be sure to call it out so the grader does not overlook it.
-
-
-----------------------------------------------------------------------------
-
-All content in a README file is expected to be written in clear English with
-proper grammar, spelling, and punctuation. If you are not a strong writer,
-be sure to get someone else to help you with proofreading. Consider all project
-documentation to be professional writing for your boss and/or potential
-customers.
+ GUI Implementation: There is an implemented fully functional GUI for CircuitTracer. It displays a grid of circuit board with appropriate visual styling, and the user will be able to select multiple solutions and view highlighted paths that show a red 'T' character from start to end. The GUI can be used using the -g command-line flag:
+ $ java CircuitTracer [storage] -g [filename]
